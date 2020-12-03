@@ -27,6 +27,7 @@
 #include "log_mgmt/log_mgmt_impl.h"
 #include "log_mgmt/log_mgmt_config.h"
 #include "log/log.h"
+#include "console/console.h"
 
 /* Log mgmt encoder context used for multiple calls of the
  * entry encode function since the function gets called twice,
@@ -382,6 +383,9 @@ log_mgmt_show(struct mgmt_ctxt *ctxt)
         },
     };
 
+    uint32_t ms;
+    os_time_t t = os_time_get();
+
     name[0] = '\0';
     rc = cbor_read_object(&ctxt->it, attr);
     if (rc != 0) {
@@ -427,6 +431,7 @@ log_mgmt_show(struct mgmt_ctxt *ctxt)
         /* Stream logs cannot be read. */
         if (log.type != LOG_MGMT_TYPE_STREAM) {
             if (name_len == 0 || strcmp(name, log.name) == 0) {
+                console_printf("log encode name %s, index %lld\n", log.name, index);
                 rc = log_encode(&log, &logs, timestamp, index);
                 if (rc) {
                     goto err;
@@ -451,6 +456,9 @@ err:
         return LOG_MGMT_ERR_ENOMEM;
     }
 
+    t = os_time_get() - t;
+    os_time_ticks_to_ms(t, &ms);
+    console_printf("log mgmt show %"PRIu32"\n", ms);
     return 0;
 }
 
